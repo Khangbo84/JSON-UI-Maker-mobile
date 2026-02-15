@@ -84,27 +84,17 @@ export class DraggableCollectionPanel {
 
     public initEvents(): void {
     // Mouse events
-    this.gridElement.addEventListener("mousedown", (e) => this.startDrag(e));
-    this.gridElement.addEventListener("dblclick", (e) => this.select(e));
+    this.panel.addEventListener("mousedown", (e) => this.startDrag(e));
+    this.panel.addEventListener("dblclick", (e) => this.select(e));
 
-    // Touch events - THÊM CẤI NÀY
-    this.gridElement.addEventListener("touchstart", (e) => this.handleTouchStart(e));
+    // Touch events
+    this.panel.addEventListener("touchstart", (e) => this.handleTouchStart(e));
 
-    document.addEventListener("mousemove", (e) => this.drag(e));
-    document.addEventListener("mouseup", () => this.stopDrag());
-
+    // Resize handle - Mouse events
     this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
+    
+    // Resize handle - Touch events
     this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
-
-    document.addEventListener("mousemove", (e) => this.outlineResize(e));
-    document.addEventListener("mouseup", (e) => this.resize(e));
-    document.addEventListener("mouseup", () => this.stopResize());
-
-    this.button.addEventListener("mouseenter", this.startHover.bind(this));
-    this.button.addEventListener("mouseleave", this.stopHover.bind(this));
-
-    this.gridElement.addEventListener("mousedown", this.startPress.bind(this));
-    this.gridElement.addEventListener("mouseup", this.stopPress.bind(this));
 }
 
 // Helper methods để convert touch → mouse
