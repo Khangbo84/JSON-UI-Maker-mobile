@@ -127,13 +127,54 @@ export class DraggableCanvas {
     }
 
     public initEvents(): void {
-        // Using the grid element as a drag target, i cant seem
-        // to get the canvas to accept input through the grid so this is a workaround
-        this.gridElement.addEventListener("mousedown", (e) => this.startDrag(e));
-        this.gridElement.addEventListener("dblclick", (e) => this.select(e));
+    // Mouse events
+    this.gridElement.addEventListener("mousedown", (e) => this.startDrag(e));
+    this.gridElement.addEventListener("dblclick", (e) => this.select(e));
 
-        this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
-    }
+    // Touch events - THÊM CẤI NÀY
+    this.gridElement.addEventListener("touchstart", (e) => this.handleTouchStart(e));
+
+    document.addEventListener("mousemove", (e) => this.drag(e));
+    document.addEventListener("mouseup", () => this.stopDrag());
+
+    this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
+    this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
+
+    document.addEventListener("mousemove", (e) => this.outlineResize(e));
+    document.addEventListener("mouseup", (e) => this.resize(e));
+    document.addEventListener("mouseup", () => this.stopResize());
+
+    this.button.addEventListener("mouseenter", this.startHover.bind(this));
+    this.button.addEventListener("mouseleave", this.stopHover.bind(this));
+
+    this.gridElement.addEventListener("mousedown", this.startPress.bind(this));
+    this.gridElement.addEventListener("mouseup", this.stopPress.bind(this));
+}
+
+// Helper methods để convert touch → mouse
+private handleTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true,
+    });
+    this.startDrag(mouseEvent);
+}
+
+private handleResizeTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true,
+    });
+    this.startResize(mouseEvent);
+        }
 
     public select(e: MouseEvent): void {
         if (!this.isEditable) return;
