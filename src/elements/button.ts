@@ -160,61 +160,48 @@ export class DraggableButton {
     }
 
 public initEvents(): void {
-    // Mouse events
-    this.gridElement.addEventListener("mousedown", (e) => this.startDrag(e));
+    // ===== POINTER EVENTS (Thay thế mouse + touch) =====
+    
+    // Drag
+    this.gridElement.addEventListener("pointerdown", (e) => this.handlePointerStart(e));
     this.gridElement.addEventListener("dblclick", (e) => this.select(e));
-    
-    // Touch events
-    this.gridElement.addEventListener("touchstart", (e) => this.handleTouchStart(e));
-    
-    document.addEventListener("mousemove", (e) => this.drag(e));
-    document.addEventListener("mouseup", () => this.stopDrag());
 
-    // Resize handle - Mouse events
-    this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
-    document.addEventListener("mousemove", (e) => this.outlineResize(e));
-    document.addEventListener("mouseup", (e) => this.resize(e));
-    document.addEventListener("mouseup", () => this.stopResize());
-    
-    // Resize handle - Touch events
-    this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
+    // Resize handle
+    this.resizeHandle.addEventListener("pointerdown", (e) => this.handleResizePointerStart(e));
 
-    // Hover events
+    // Hover events (vẫn dùng mouseenter/mouseleave vì pointer không hỗ trợ)
     this.button.addEventListener("mouseenter", this.startHover.bind(this));
     this.button.addEventListener("mouseleave", this.stopHover.bind(this));
 
     // Press events
-    this.gridElement.addEventListener("mousedown", this.startPress.bind(this));
-    this.gridElement.addEventListener("mouseup", this.stopPress.bind(this));
-    this.gridElement.addEventListener("touchstart", () => this.startPress.bind(this));
-    this.gridElement.addEventListener("touchend", () => this.stopPress.bind(this));
+    this.gridElement.addEventListener("pointerdown", this.startPress.bind(this));
+    this.gridElement.addEventListener("pointerup", this.stopPress.bind(this));
 }
 
-// Helper methods để convert touch → mouse
-private handleTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 0) return;
-    const touch = e.touches[0];
+// ===== Helper methods để convert PointerEvent → MouseEvent =====
+private handlePointerStart(e: PointerEvent): void {
+    if (!e.isPrimary) return; // Chỉ xử lý primary pointer
+    
     const mouseEvent = new MouseEvent("mousedown", {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
+        clientX: e.clientX,
+        clientY: e.clientY,
         bubbles: true,
         cancelable: true,
     });
     this.startDrag(mouseEvent);
 }
 
-private handleResizeTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 0) return;
-    const touch = e.touches[0];
+private handleResizePointerStart(e: PointerEvent): void {
+    if (!e.isPrimary) return;
+    
     const mouseEvent = new MouseEvent("mousedown", {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
+        clientX: e.clientX,
+        clientY: e.clientY,
         bubbles: true,
         cancelable: true,
     });
     this.startResize(mouseEvent);
 }
-
     public select(e: MouseEvent): void {
         ElementSharedFuncs.select(e, this);
     }
