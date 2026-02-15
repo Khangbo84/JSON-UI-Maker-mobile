@@ -6,18 +6,16 @@ let ticking = false;
 // Helper function to get coordinates from MouseEvent or TouchEvent
 function getEventCoordinates(e: MouseEvent | TouchEvent): { clientX: number; clientY: number } {
     if (e instanceof TouchEvent) {
-        // Ưu tiên touches (khi đang chạm), nếu không có thì dùng changedTouches
         const touch = e.touches[0] ?? e.changedTouches[0];
         if (touch) {
             return { clientX: touch.clientX, clientY: touch.clientY };
         }
     }
-    // Fallback cho MouseEvent
     const mouseEvent = e as MouseEvent;
     return { clientX: mouseEvent.clientX, clientY: mouseEvent.clientY };
 }
 
-// Mouse events - Original logic
+// ===== MOUSE EVENTS =====
 document.addEventListener("mousemove", (e) => {
     if (!draggedElement && !resizedElement) return;
     pendingEvent = e;
@@ -42,11 +40,13 @@ document.addEventListener("mouseup", (e) => {
     resizedElement?.stopResize(e);
 });
 
-// Touch events for mobile support
+// ===== TOUCH EVENTS =====
 document.addEventListener("touchmove", (e) => {
     if (!draggedElement && !resizedElement) return;
     
-    // Tạo synthetic MouseEvent từ TouchEvent
+    e.preventDefault(); // Prevent default scroll behavior
+    
+    // Create a synthetic MouseEvent from TouchEvent
     const coords = getEventCoordinates(e);
     const syntheticEvent = new MouseEvent("mousemove", {
         clientX: coords.clientX,
@@ -68,14 +68,14 @@ document.addEventListener("touchmove", (e) => {
         });
         ticking = true;
     }
-});
+}, { passive: false }); // IMPORTANT: Set passive to false to allow preventDefault()
 
 document.addEventListener("touchend", (e) => {
     if (!draggedElement && !resizedElement) return;
 
     draggedElement?.stopDrag();
     
-    // Tạo synthetic event cho stopResize
+    // Create a synthetic event for stopResize
     const coords = getEventCoordinates(e);
     const syntheticEvent = new MouseEvent("mouseup", {
         clientX: coords.clientX,
@@ -85,4 +85,11 @@ document.addEventListener("touchend", (e) => {
     });
     
     resizedElement?.stopResize(syntheticEvent);
+});
+
+document.addEventListener("touchcancel", (e) => {
+    if (!draggedElement && !resizedElement) return;
+
+    draggedElement?.stopDrag();
+    resizedElement?.stopResize(undefined);
 });
