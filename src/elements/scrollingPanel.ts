@@ -83,48 +83,42 @@ export class DraggableScrollingPanel {
     }
 
     public initEvents(): void {
-    // Mouse events
-    this.panel.addEventListener("mousedown", (e) => this.startDrag(e));
+    // ===== POINTER EVENTS =====
+    this.panel.addEventListener("pointerdown", (e) => this.handlePointerStart(e));
     this.panel.addEventListener("dblclick", (e) => this.select(e));
 
-    // Touch events
-    this.panel.addEventListener("touchstart", (e) => this.handleTouchStart(e));
-
-    // Resize handle - Mouse events
-    this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
-    
-    // Resize handle - Touch events
-    this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
+    // Resize handle
+    this.resizeHandle.addEventListener("pointerdown", (e) => this.handleResizePointerStart(e));
 
     // Scroll event (giữ nguyên)
     this.panel.addEventListener("scroll", () => this.slider.updateHandle());
 }
 
-// Helper methods để convert touch → mouse
-private handleTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 0) return;
-    const touch = e.touches[0];
+// ===== Helper methods để convert PointerEvent → MouseEvent =====
+private handlePointerStart(e: PointerEvent): void {
+    if (!e.isPrimary) return;
+    
     const mouseEvent = new MouseEvent("mousedown", {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
+        clientX: e.clientX,
+        clientY: e.clientY,
         bubbles: true,
         cancelable: true,
     });
     this.startDrag(mouseEvent);
 }
 
-private handleResizeTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 0) return;
-    const touch = e.touches[0];
+private handleResizePointerStart(e: PointerEvent): void {
+    if (!e.isPrimary) return;
+    
     const mouseEvent = new MouseEvent("mousedown", {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
+        clientX: e.clientX,
+        clientY: e.clientY,
         bubbles: true,
         cancelable: true,
     });
     this.startResize(mouseEvent);
 }
-
+    
     public select(e: MouseEvent): void {
         ElementSharedFuncs.select(e, this);
     }
