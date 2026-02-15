@@ -1,30 +1,23 @@
 import { draggedElement, resizedElement } from "../index.js";
 
-let pendingEvent: MouseEvent | null = null;
+let pendingEvent: PointerEvent | null = null;
 let ticking = false;
 
-// Helper function to get coordinates from MouseEvent or TouchEvent
-function getEventCoordinates(e: MouseEvent | TouchEvent): { clientX: number; clientY: number } {
-    if (e instanceof TouchEvent) {
-        const touch = e.touches[0] ?? e.changedTouches[0];
-        if (touch) {
-            return { clientX: touch.clientX, clientY: touch.clientY };
-        }
-    }
-    const mouseEvent = e as MouseEvent;
-    return { clientX: mouseEvent.clientX, clientY: mouseEvent.clientY };
-}
+// ===== POINTER EVENTS (Hoạt động cho chuột, touch, stylus) =====
 
-// ===== MOUSE EVENTS =====
-document.addEventListener("mousemove", (e) => {
+document.addEventListener("pointermove", (e) => {
     if (!draggedElement && !resizedElement) return;
+    
+    // Chỉ xử lý primary pointer (để tránh lặp khi multi-touch)
+    if (!e.isPrimary) return;
+    
     pendingEvent = e;
 
     if (!ticking) {
         requestAnimationFrame(() => {
             if (pendingEvent) {
-                if (draggedElement) draggedElement.drag(pendingEvent);
-                if (resizedElement) resizedElement.resize(pendingEvent);
+                if (draggedElement) draggedElement.drag(pendingEvent as unknown as MouseEvent);
+                if (resizedElement) resizedElement.resize(pendingEvent as unknown as MouseEvent);
                 pendingEvent = null;
             }
             ticking = false;
@@ -33,62 +26,18 @@ document.addEventListener("mousemove", (e) => {
     }
 });
 
-document.addEventListener("mouseup", (e) => {
+document.addEventListener("pointerup", (e) => {
     if (!draggedElement && !resizedElement) return;
+    if (!e.isPrimary) return;
 
     draggedElement?.stopDrag();
-    resizedElement?.stopResize(e);
+    resizedElement?.stopResize(e as unknown as MouseEvent);
 });
 
-// ===== TOUCH EVENTS =====
-document.addEventListener("touchmove", (e) => {
+// ===== POINTER CANCEL (Xử lý trường hợp pointer bị hủy) =====
+document.addEventListener("pointercancel", (e) => {
     if (!draggedElement && !resizedElement) return;
-    
-    e.preventDefault(); // Prevent default scroll behavior
-    
-    // Create a synthetic MouseEvent from TouchEvent
-    const coords = getEventCoordinates(e);
-    const syntheticEvent = new MouseEvent("mousemove", {
-        clientX: coords.clientX,
-        clientY: coords.clientY,
-        bubbles: true,
-        cancelable: true,
-    });
-    
-    pendingEvent = syntheticEvent;
-
-    if (!ticking) {
-        requestAnimationFrame(() => {
-            if (pendingEvent) {
-                if (draggedElement) draggedElement.drag(pendingEvent);
-                if (resizedElement) resizedElement.resize(pendingEvent);
-                pendingEvent = null;
-            }
-            ticking = false;
-        });
-        ticking = true;
-    }
-}, { passive: false }); // IMPORTANT: Set passive to false to allow preventDefault()
-
-document.addEventListener("touchend", (e) => {
-    if (!draggedElement && !resizedElement) return;
-
-    draggedElement?.stopDrag();
-    
-    // Create a synthetic event for stopResize
-    const coords = getEventCoordinates(e);
-    const syntheticEvent = new MouseEvent("mouseup", {
-        clientX: coords.clientX,
-        clientY: coords.clientY,
-        bubbles: true,
-        cancelable: true,
-    });
-    
-    resizedElement?.stopResize(syntheticEvent);
-});
-
-document.addEventListener("touchcancel", (e) => {
-    if (!draggedElement && !resizedElement) return;
+    if (!e.isPrimary) return;
 
     draggedElement?.stopDrag();
     resizedElement?.stopResize(undefined);
