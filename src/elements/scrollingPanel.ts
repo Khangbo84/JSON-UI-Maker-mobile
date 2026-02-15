@@ -83,13 +83,47 @@ export class DraggableScrollingPanel {
     }
 
     public initEvents(): void {
-        this.panel.addEventListener("mousedown", (e) => this.startDrag(e));
-        this.panel.addEventListener("dblclick", (e) => this.select(e));
+    // Mouse events
+    this.panel.addEventListener("mousedown", (e) => this.startDrag(e));
+    this.panel.addEventListener("dblclick", (e) => this.select(e));
 
-        this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
+    // Touch events
+    this.panel.addEventListener("touchstart", (e) => this.handleTouchStart(e));
 
-        this.panel.addEventListener("scroll", () => this.slider.updateHandle());
-    }
+    // Resize handle - Mouse events
+    this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
+    
+    // Resize handle - Touch events
+    this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
+
+    // Scroll event (giữ nguyên)
+    this.panel.addEventListener("scroll", () => this.slider.updateHandle());
+}
+
+// Helper methods để convert touch → mouse
+private handleTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true,
+    });
+    this.startDrag(mouseEvent);
+}
+
+private handleResizeTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true,
+    });
+    this.startResize(mouseEvent);
+}
 
     public select(e: MouseEvent): void {
         ElementSharedFuncs.select(e, this);
