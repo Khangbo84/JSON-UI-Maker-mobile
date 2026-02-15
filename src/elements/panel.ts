@@ -85,14 +85,12 @@ export class DraggablePanel {
     }
 
     public initEvents(): void {
-    // Using the grid element as a drag target
-    
     // ===== POINTER EVENTS =====
-    this.gridElement.addEventListener("pointerdown", (e) => this.handlePointerStart(e));
-    this.gridElement.addEventListener("dblclick", (e) => this.select(e));
+    this.panel.addEventListener("pointerdown", (e) => this.handlePointerStart(e));
+    this.panel.addEventListener("dblclick", (e) => this.select(e));
 
     // Resize handle
-    this.resizeHandle.addEventListener("pointerdown", (e) => this.handleResizePointerStart(e));
+    this.resizeHandle!.addEventListener("pointerdown", (e) => this.handleResizePointerStart(e));
 }
 
 // ===== Helper methods để convert PointerEvent → MouseEvent =====
