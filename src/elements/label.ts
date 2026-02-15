@@ -179,25 +179,21 @@ export class DraggableLabel {
     }
 
 public initEvents(): void {
-    // Mouse events
-    this.label.addEventListener("mousedown", (e) => this.startDrag(e));
+    // ===== POINTER EVENTS =====
+    this.label.addEventListener("pointerdown", (e) => this.handlePointerStart(e));
     this.label.addEventListener("dblclick", (e) => this.select(e));
-    
-    // Touch events - để có thể kéo label trên mobile
-    this.label.addEventListener("touchstart", (e) => this.handleTouchStart(e));
 
     // Initial size
     this.updateSize();
 
-    // Auto-resize on input - but don't call updateSize immediately to avoid font validation issues
+    // Auto-resize on input
     let resizeTimeout: number | null = null;
     this.label.addEventListener("input", () => {
         this.handleTextChange();
-        // Delay the updateSize call to avoid interrupting typing
         if (resizeTimeout) clearTimeout(resizeTimeout);
         resizeTimeout = window.setTimeout(() => {
             this.updateSize();
-        }, 200); // Longer delay for text input
+        }, 200);
     });
 
     // Track text changes for undo/redo
@@ -254,18 +250,18 @@ public initEvents(): void {
     }
 }
 
-// Helper method để convert touch → mouse
-private handleTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 0) return;
-    const touch = e.touches[0];
+// ===== Helper method để convert PointerEvent → MouseEvent =====
+private handlePointerStart(e: PointerEvent): void {
+    if (!e.isPrimary) return;
+    
     const mouseEvent = new MouseEvent("mousedown", {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
+        clientX: e.clientX,
+        clientY: e.clientY,
         bubbles: true,
         cancelable: true,
     });
     this.startDrag(mouseEvent);
-    }
+                                    }
 
     public handleTextChange(): void {
         // This method can be used for additional text change handling if needed
