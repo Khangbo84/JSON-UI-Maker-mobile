@@ -163,25 +163,31 @@ public initEvents(): void {
     // Mouse events
     this.gridElement.addEventListener("mousedown", (e) => this.startDrag(e));
     this.gridElement.addEventListener("dblclick", (e) => this.select(e));
-
-    // Touch events - THÊM CẤI NÀY
+    
+    // Touch events
     this.gridElement.addEventListener("touchstart", (e) => this.handleTouchStart(e));
-
+    
     document.addEventListener("mousemove", (e) => this.drag(e));
     document.addEventListener("mouseup", () => this.stopDrag());
 
+    // Resize handle - Mouse events
     this.resizeHandle.addEventListener("mousedown", (e) => this.startResize(e));
-    this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
-
     document.addEventListener("mousemove", (e) => this.outlineResize(e));
     document.addEventListener("mouseup", (e) => this.resize(e));
     document.addEventListener("mouseup", () => this.stopResize());
+    
+    // Resize handle - Touch events
+    this.resizeHandle.addEventListener("touchstart", (e) => this.handleResizeTouchStart(e));
 
+    // Hover events
     this.button.addEventListener("mouseenter", this.startHover.bind(this));
     this.button.addEventListener("mouseleave", this.stopHover.bind(this));
 
+    // Press events
     this.gridElement.addEventListener("mousedown", this.startPress.bind(this));
     this.gridElement.addEventListener("mouseup", this.stopPress.bind(this));
+    this.gridElement.addEventListener("touchstart", () => this.startPress.bind(this));
+    this.gridElement.addEventListener("touchend", () => this.stopPress.bind(this));
 }
 
 // Helper methods để convert touch → mouse
@@ -207,7 +213,7 @@ private handleResizeTouchStart(e: TouchEvent): void {
         cancelable: true,
     });
     this.startResize(mouseEvent);
-            }
+}
 
     public select(e: MouseEvent): void {
         ElementSharedFuncs.select(e, this);
