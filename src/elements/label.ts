@@ -178,78 +178,93 @@ export class DraggableLabel {
         this.shadowLabel.style.top = `${StringUtil.cssDimToNumber(this.label.style.top) + this.shadowOffsetY + offset[1]}px`;
     }
 
-    public initEvents(): void {
-        this.label.addEventListener("mousedown", (e) => this.startDrag(e));
-        this.label.addEventListener("dblclick", (e) => this.select(e));
+public initEvents(): void {
+    // Mouse events
+    this.label.addEventListener("mousedown", (e) => this.startDrag(e));
+    this.label.addEventListener("dblclick", (e) => this.select(e));
+    
+    // Touch events - để có thể kéo label trên mobile
+    this.label.addEventListener("touchstart", (e) => this.handleTouchStart(e));
 
-        // Initial size
-        this.updateSize();
+    // Initial size
+    this.updateSize();
 
-        // Auto-resize on input - but don't call updateSize immediately to avoid font validation issues
-        let resizeTimeout: number | null = null;
-        this.label.addEventListener("input", () => {
-            this.handleTextChange();
-            // Delay the updateSize call to avoid interrupting typing
-            if (resizeTimeout) clearTimeout(resizeTimeout);
-            resizeTimeout = window.setTimeout(() => {
-                this.updateSize();
-            }, 200); // Longer delay for text input
-        });
+    // Auto-resize on input - but don't call updateSize immediately to avoid font validation issues
+    let resizeTimeout: number | null = null;
+    this.label.addEventListener("input", () => {
+        this.handleTextChange();
+        // Delay the updateSize call to avoid interrupting typing
+        if (resizeTimeout) clearTimeout(resizeTimeout);
+        resizeTimeout = window.setTimeout(() => {
+            this.updateSize();
+        }, 200); // Longer delay for text input
+    });
 
-        // Track text changes for undo/redo
-        let lastTextValue = this.label.value;
-        let hasUnsavedTextChanges = false;
+    // Track text changes for undo/redo
+    let lastTextValue = this.label.value;
+    let hasUnsavedTextChanges = false;
 
-        this.label.addEventListener("focus", () => {
+    this.label.addEventListener("focus", () => {
+        lastTextValue = this.label.value;
+        hasUnsavedTextChanges = false;
+    });
+
+    this.label.addEventListener("input", () => {
+        hasUnsavedTextChanges = true;
+    });
+
+    this.label.addEventListener("blur", () => {
+        if (hasUnsavedTextChanges && lastTextValue !== this.label.value) {
+            undoRedoManager.push({
+                type: 'modify',
+                elementId: this.label.dataset.id!,
+                previousState: { text: lastTextValue },
+                newState: { text: this.label.value }
+            });
+            hasUnsavedTextChanges = false;
+        }
+    });
+
+    this.label.addEventListener("keydown", (e) => {
+        if (e.key === 'Enter' && hasUnsavedTextChanges) {
+            undoRedoManager.push({
+                type: 'modify',
+                elementId: this.label.dataset.id!,
+                previousState: { text: lastTextValue },
+                newState: { text: this.label.value }
+            });
             lastTextValue = this.label.value;
             hasUnsavedTextChanges = false;
-        });
+        }
+    });
 
-        this.label.addEventListener("input", () => {
-            hasUnsavedTextChanges = true;
+    if (this.bindingsTextPrompt) {
+        this.label.addEventListener("focus", () => {
+            this.focussed = true;
         });
 
         this.label.addEventListener("blur", () => {
-            if (hasUnsavedTextChanges && lastTextValue !== this.label.value) {
-                // Record text change only when focus leaves and text actually changed
-                undoRedoManager.push({
-                    type: 'modify',
-                    elementId: this.label.dataset.id!,
-                    previousState: { text: lastTextValue },
-                    newState: { text: this.label.value }
-                });
-                hasUnsavedTextChanges = false;
-            }
+            this.focussed = false;
+            if (!this.bindingsTextPrompt!.hovered) this.bindingsTextPrompt?.detach();
         });
 
-        // Handle Enter key for labels (treat as "commit" action)
-        this.label.addEventListener("keydown", (e) => {
-            if (e.key === 'Enter' && hasUnsavedTextChanges) {
-                undoRedoManager.push({
-                    type: 'modify',
-                    elementId: this.label.dataset.id!,
-                    previousState: { text: lastTextValue },
-                    newState: { text: this.label.value }
-                });
-                lastTextValue = this.label.value;
-                hasUnsavedTextChanges = false;
-            }
+        window.addEventListener("keydown", (e) => {
+            if (this.focussed) this.handleKeyboardInput(e);
         });
+    }
+}
 
-        if (this.bindingsTextPrompt) {
-            this.label.addEventListener("focus", () => {
-                this.focussed = true;
-            });
-
-            this.label.addEventListener("blur", () => {
-                this.focussed = false;
-                if (!this.bindingsTextPrompt!.hovered) this.bindingsTextPrompt?.detach();
-            });
-
-            window.addEventListener("keydown", (e) => {
-                if (this.focussed) this.handleKeyboardInput(e);
-            });
-        }
+// Helper method để convert touch → mouse
+private handleTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent("mousedown", {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        bubbles: true,
+        cancelable: true,
+    });
+    this.startDrag(mouseEvent);
     }
 
     public handleTextChange(): void {
